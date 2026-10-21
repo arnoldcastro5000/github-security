@@ -14,7 +14,7 @@ This file reports facts and trade-offs. The decision belongs to a later grilling
 2. **The access setting has no plan gate and no direct cost.** The changelog names "user account" as a supported owner. [S2] The REST docs name no plan restriction. [S3] A live `GET .../actions/permissions/access` on `github-security` returns `{"access_level":"none"}`, not a 403 plan error (verified live). The setting is still `none` today. This research did not change it.
 3. **Billing goes to the caller.** "Billing for GitHub-hosted runners is always associated with the caller." [S4] Public repos on standard runners are free. Private repos on Free share 2,000 minutes per month, and usage is blocked at quota without a payment method. [S5] The source visibility does not change who pays.
 4. **A public source reaches all 16 repos.** A private caller can use public workflows. [S4] Two ways exist: make `github-security` public, or split the shared workflows and actions into a separate public repo. Trade-off: a public source exposes the Baseline content (scanner rules, allowlists). `understand-greenstand` treats private repo names as sensitive (it runs a private-name check before it posts text), so a public source must not contain private repo names.
-5. **Repo settings are the weak point on Free, not files.** On private repos, rulesets and branch protection return `403 "Upgrade to GitHub Pro or make this repository public"` (verified live on `github-security` and `weather`). Code scanning default setup returns 403 on a private repo and works on a public repo (verified live). Secret scanning and push protection show as enabled on public `loonvault` and are absent on private `weather` (verified live). No file-based mechanism can apply these settings; only an API caller can, and only where the plan allows it.
+5. **Repo settings are the weak point on Free, not files.** On private repos, rulesets and branch protection return `403 "Upgrade to GitHub Pro or make this repository public"` (verified live on `github-security` and `<private-repo>`). Code scanning default setup returns 403 on a private repo and works on a public repo (verified live). Secret scanning and push protection show as enabled on public `loonvault` and are absent on private `<private-repo>` (verified live). No file-based mechanism can apply these settings; only an API caller can, and only where the plan allows it.
 6. **Prior art drifts already.** `loonvault` and `prowler-cspm-demo` copy workflows by hand. Their secret scan pins differ: betterleaks 1.5.0 vs 1.4.0, and two different `actions/checkout` SHAs (v6.0.3 vs v6) (verified live).
 
 ## Mechanisms
@@ -49,7 +49,7 @@ What the REST API can set on Free (by visibility):
 
 | Setting | Endpoint | Public repo | Private repo |
 | --- | --- | --- | --- |
-| Merge options, `delete_branch_on_merge`, `has_wiki`, `web_commit_signoff_required` | `PATCH /repos/{o}/{r}` [S10] | yes | yes (fields readable live on `weather`) |
+| Merge options, `delete_branch_on_merge`, `has_wiki`, `web_commit_signoff_required` | `PATCH /repos/{o}/{r}` [S10] | yes | yes (fields readable live on `<private-repo>`) |
 | Actions enabled, `allowed_actions`, `sha_pinning_required` | `PUT .../actions/permissions` [S3] | yes | yes (readable live) |
 | Default `GITHUB_TOKEN` permissions, PR approval by Actions | `PUT .../actions/permissions/workflow` [S3] | yes | yes (readable live) |
 | Actions access level for shared components | `PUT .../actions/permissions/access` [S3] | not applicable | yes (readable live) |
