@@ -46,7 +46,7 @@ Legend: **Yes** means available. **No** means not available. "live" means verifi
 3. **Group B on user-owned repos.** For user-owned repos, the secret scanning docs name only Enterprise Cloud with Enterprise Managed Users and Enterprise Server [secret]. The GHAS docs say: "You must be on a GitHub Team or GitHub Enterprise plan in order to purchase GitHub Code Security or GitHub Secret Protection." [ghas]. Thus GitHub Pro does not add Group B.
 4. **Push protection for users.** This is a separate account-level control. It is on by default for every account. It "stops you from pushing secrets to public repositories on GitHub" [push]. It does not protect pushes to private repos.
 5. **Dependency review conflict in the docs.** The dependency review page says the feature is available for "Public repositories on GitHub.com" [depreview]. The GHAS comparison table marks dependency review as "No" for a public repo without Code Security [ghas]. The live API agrees with the dependency review page: the compare endpoint returns 200 on the public repo and 403 on the private repo (L12, L13).
-6. **Dependabot on the private test repo.** On `weather`, Dependabot alerts are off. The API says "Dependabot alerts are disabled for this repository." (HTTP 403). This message names a setting, not a plan. The "upgrade" message from rulesets does not appear. The docs say Dependabot alerts "are available for organization-owned and user-owned repositories" [dbalerts]. The docs say Dependabot security updates are available for "All repositories on GitHub" [dbupdates].
+6. **Dependabot on the private test repo.** On `<private-repo>`, Dependabot alerts are off. The API says "Dependabot alerts are disabled for this repository." (HTTP 403). This message names a setting, not a plan. The "upgrade" message from rulesets does not appear. The docs say Dependabot alerts "are available for organization-owned and user-owned repositories" [dbalerts]. The docs say Dependabot security updates are available for "All repositories on GitHub" [dbupdates].
 7. **Actions settings.** The repo-level Actions settings page shows no plan limit for the allowed-actions policy, the "Require actions to be pinned to a full-length commit SHA" option, or the default `GITHUB_TOKEN` permissions [actions]. The API returns these settings on the private repo with no plan error (L16, L17). The SHA-pinning option applies to actions. The docs say: "Reusable workflows can still be referenced by tag." [actions].
 8. **Reusable workflows from a private repo.** A private repo can share its actions and reusable workflows with other private repos of the same owner. The setting is "Accessible from repositories owned by 'USER NAME' user" [actions], [share]. The docs say: "Access is allowed only from private repositories." [actions]. A public caller can use only public workflows [reuse].
 
@@ -67,28 +67,28 @@ There are two gaps. The paid options are different for each gap.
 
 ## Live checks
 
-All calls are read-only. No repo setting changed. Public repo: `arnoldcastro5000/loonvault`. Private repo: `arnoldcastro5000/weather`. Both repos use `main` as the default branch.
+All calls are read-only. No repo setting changed. Public repo: `arnoldcastro5000/loonvault`. Private repo: `arnoldcastro5000/<private-repo>`. Both repos use `main` as the default branch.
 
 | ID | Call | Result |
 | --- | --- | --- |
 | L1 | `gh api repos/arnoldcastro5000/loonvault/rulesets/17643421` | 200. Ruleset `protect-main` is active. Rule types: `deletion`, `non_fast_forward`, `pull_request`, `required_status_checks`. |
-| L2 | `gh api repos/arnoldcastro5000/weather/rulesets` | 403 "Upgrade to GitHub Pro or make this repository public to enable this feature." |
+| L2 | `gh api repos/arnoldcastro5000/<private-repo>/rulesets` | 403 "Upgrade to GitHub Pro or make this repository public to enable this feature." |
 | L3 | `gh api repos/arnoldcastro5000/loonvault/branches/main/protection` | 404 "Branch not protected". The feature is available but not in use. |
-| L4 | `gh api repos/arnoldcastro5000/weather/branches/main/protection` | 403 "Upgrade to GitHub Pro or make this repository public to enable this feature." |
+| L4 | `gh api repos/arnoldcastro5000/<private-repo>/branches/main/protection` | 403 "Upgrade to GitHub Pro or make this repository public to enable this feature." |
 | L5 | `gh api repos/arnoldcastro5000/loonvault` (`security_and_analysis`) | `secret_scanning`, `secret_scanning_push_protection`, and `dependabot_security_updates` are `enabled`. |
-| L6 | `gh api repos/arnoldcastro5000/weather/secret-scanning/alerts` | 404 "Secret scanning is disabled on this repository." `security_and_analysis` on the repo is `null`. |
+| L6 | `gh api repos/arnoldcastro5000/<private-repo>/secret-scanning/alerts` | 404 "Secret scanning is disabled on this repository." `security_and_analysis` on the repo is `null`. |
 | L7 | `gh api repos/arnoldcastro5000/loonvault/code-scanning/alerts` | 404 "no analysis found". The feature is available but has no upload. |
-| L8 | `gh api repos/arnoldcastro5000/weather/code-scanning/alerts` and `.../code-scanning/default-setup` | 403 "Code scanning is not enabled for this repository." |
+| L8 | `gh api repos/arnoldcastro5000/<private-repo>/code-scanning/alerts` and `.../code-scanning/default-setup` | 403 "Code scanning is not enabled for this repository." |
 | L9 | `gh api repos/arnoldcastro5000/loonvault/code-scanning/default-setup` | 200. `state: not-configured`. Languages detected. |
 | L10 | `gh api repos/arnoldcastro5000/loonvault/dependabot/alerts` | 200. The list contains alerts. |
-| L11 | `gh api repos/arnoldcastro5000/weather/dependabot/alerts` and `.../automated-security-fixes` | 403 "Dependabot alerts are disabled for this repository." Security updates: `{"enabled":false,"paused":false}`. |
+| L11 | `gh api repos/arnoldcastro5000/<private-repo>/dependabot/alerts` and `.../automated-security-fixes` | 403 "Dependabot alerts are disabled for this repository." Security updates: `{"enabled":false,"paused":false}`. |
 | L12 | `gh api repos/arnoldcastro5000/loonvault/dependency-graph/compare/HEAD~1...HEAD` | 200 (`[]`). |
-| L13 | `gh api repos/arnoldcastro5000/weather/dependency-graph/compare/HEAD~1...HEAD` | 403 "Forbidden". |
+| L13 | `gh api repos/arnoldcastro5000/<private-repo>/dependency-graph/compare/HEAD~1...HEAD` | 403 "Forbidden". |
 | L14 | `gh api repos/arnoldcastro5000/loonvault/private-vulnerability-reporting` | 200 `{"enabled":true}`. |
-| L15 | `gh api repos/arnoldcastro5000/weather/private-vulnerability-reporting` | 404 "Not Found". |
-| L16 | `gh api repos/arnoldcastro5000/{loonvault,weather}/actions/permissions` | 200 on both: `{"enabled":true,"allowed_actions":"all","sha_pinning_required":false}`. |
-| L17 | `gh api repos/arnoldcastro5000/{loonvault,weather}/actions/permissions/workflow` | 200 on both: `default_workflow_permissions: read`, `can_approve_pull_request_reviews: false`. |
-| L18 | `gh api repos/arnoldcastro5000/weather/actions/permissions/access` | 200 `{"access_level":"none"}`. On `loonvault`: 422 "Access policy only applies to internal and private repositories." |
+| L15 | `gh api repos/arnoldcastro5000/<private-repo>/private-vulnerability-reporting` | 404 "Not Found". |
+| L16 | `gh api repos/arnoldcastro5000/{loonvault,<private-repo>}/actions/permissions` | 200 on both: `{"enabled":true,"allowed_actions":"all","sha_pinning_required":false}`. |
+| L17 | `gh api repos/arnoldcastro5000/{loonvault,<private-repo>}/actions/permissions/workflow` | 200 on both: `default_workflow_permissions: read`, `can_approve_pull_request_reviews: false`. |
+| L18 | `gh api repos/arnoldcastro5000/<private-repo>/actions/permissions/access` | 200 `{"access_level":"none"}`. On `loonvault`: 422 "Access policy only applies to internal and private repositories." |
 
 ## Not verified
 
