@@ -1,0 +1,92 @@
+# Template for the caller file .github/workflows/security.yml of an in-scope repo.
+# Bootstrap (apply phase) fills the placeholders:
+#   __REF__          full SHA and version comment of a github-security release, for example
+#                    "0123abc...  # v0.1.0" (Dependabot bumps it after that)
+#   __SARIF__        true on a public repo, false on a private repo
+#   __SARIF_PERM__   "security-events: write" on a public repo; the line is removed on a private repo
+# Bootstrap removes the dependency-review job on a private repo, and keeps only the Module
+# jobs for the stacks it detects. See docs/controls.md.
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1" # weekly full scan
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Baseline
+  secrets:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/secrets.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  workflow-security:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/workflow-security.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  dependency-review: # public repos only
+    permissions:
+      contents: read
+    uses: arnoldcastro5000/github-security/.github/workflows/dependency-review.yml@__REF__
+
+  # Modules (keep the ones that match the repo)
+  python:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/python.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  node:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/node.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  terraform:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/terraform.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  container:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/container.yml@__REF__
+    with:
+      upload-sarif: __SARIF__
+
+  shell:
+    permissions:
+      contents: read
+    uses: arnoldcastro5000/github-security/.github/workflows/shell.yml@__REF__
+
+  opa:
+    permissions:
+      contents: read
+      __SARIF_PERM__
+    uses: arnoldcastro5000/github-security/.github/workflows/opa.yml@__REF__
+    with:
+      upload-sarif: __SARIF__

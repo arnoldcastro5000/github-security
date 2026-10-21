@@ -1,0 +1,13 @@
+# Template for .github/dependabot.yml of an in-scope repo.
+# Bootstrap adds one entry per detected ecosystem (pip, npm, docker, terraform, ...) with the
+# same schedule and cooldown.
+# cooldown: hold a new release for 7 days before proposing it. A compromised release is
+# usually found and yanked within days.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7

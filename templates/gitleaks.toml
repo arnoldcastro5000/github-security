@@ -1,0 +1,7 @@
+# Template for .gitleaks.toml of an in-scope repo (optional).
+# The Baseline secrets scan extends this file when it exists. Keep useDefault = true.
+# Add repo rules as [[rules]] and proven false positives as an allowlist. Prefer a
+# fingerprint in .gitleaksignore for a single finding.
+
+[extend]
+useDefault = true
