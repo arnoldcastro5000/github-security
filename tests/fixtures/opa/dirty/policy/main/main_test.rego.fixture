@@ -1,0 +1,7 @@
+package main_test
+
+import data.main
+
+test_private_bucket_denied if {
+	count(main.deny) == 1 with input as {"bucket": {"public": false}}
+}

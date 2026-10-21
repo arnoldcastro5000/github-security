@@ -1,0 +1,5 @@
+"""Clean fixture for the Python module."""
+
+
+def greet(name: str) -> str:
+    return f"Hello, {name}"
