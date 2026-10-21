@@ -31,16 +31,9 @@ tflint_scan() {
 }
 check tflint tflint_scan
 
+# checkov writes the SARIF report to the given path when that path does not exist yet.
 check checkov checkov --directory . --framework terraform --quiet --compact \
-  --output cli --output sarif --output-file-path "console,$BASELINE_OUT/checkov"
-# checkov picks the report file name itself; keep it as checkov.sarif.
-checkov_report="$(find "$BASELINE_OUT/checkov" -name '*.sarif' 2>/dev/null | head -1)"
-if [ -n "$checkov_report" ]; then
-  mv "$checkov_report" "$BASELINE_OUT/checkov.sarif"
-else
-  echo "terraform.sh: checkov wrote no SARIF report; files: $(find "$BASELINE_OUT/checkov" -type f 2>/dev/null | tr '\n' ' ')"
-fi
-rm -rf "$BASELINE_OUT/checkov"
+  --output cli --output sarif --output-file-path "console,$BASELINE_OUT/checkov.sarif"
 
 # shellcheck disable=SC2329 # check() calls this function
 trivy_config() {
