@@ -1,0 +1,19 @@
+name: Dependency review
+
+# Baseline (public repos). On a pull request, fails when the change adds a dependency with a
+# known vulnerability. On other events the job is skipped, and a skipped job counts as a pass
+# for a required check. GitHub Free gives dependency review to public repos only.
+#
+# Permissions come from the calling job: contents: read.
+
+on:
+  workflow_call:
+
+jobs:
+  scan:
+    name: scan
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0

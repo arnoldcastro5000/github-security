@@ -1,0 +1,70 @@
+name: OPA
+
+# Module. Lints Rego with regal and runs the policy unit tests with conftest verify.
+# A finding or a failed test fails the job.
+#
+# Permissions come from the calling job: contents: read, plus security-events: write when
+# upload-sarif is true (public repos only on GitHub Free).
+# This workflow checks out github-security at its own commit (job.workflow_sha) for pins.env
+# and the scan scripts.
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: The directory to scan, relative to the repo root.
+        type: string
+        default: "."
+      policy-dir:
+        description: The policy directory, relative to working-directory.
+        type: string
+        default: policy
+      upload-sarif:
+        description: Upload the reports to code scanning.
+        type: boolean
+        default: false
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout the Baseline at this workflow's commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .baseline
+          persist-credentials: false
+
+      - name: Move the Baseline out of the workspace and load the pins
+        run: |
+          mv .baseline "$RUNNER_TEMP/baseline"
+          grep -E '^[A-Z0-9_]+=' "$RUNNER_TEMP/baseline/pins.env" >> "$GITHUB_ENV"
+
+      - name: Install tools
+        run: '"$RUNNER_TEMP/baseline/scripts/install-tool.sh" regal conftest'
+
+      - name: Scan
+        env:
+          WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          POLICY_DIR: ${{ inputs.policy-dir }}
+        run: '"$RUNNER_TEMP/baseline/scripts/scan/opa.sh" "$WORKING_DIRECTORY" "$POLICY_DIR"'
+
+      - name: Summarize findings
+        if: ${{ !cancelled() }}
+        run: '"$RUNNER_TEMP/baseline/scripts/sarif-summary.sh" "OPA" "$RUNNER_TEMP/baseline-out"'
+
+      # Fork pull requests get a read-only token and cannot upload.
+      - name: Upload SARIF to code scanning
+        if: ${{ !cancelled() && inputs.upload-sarif && !github.event.pull_request.head.repo.fork }}
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: ${{ runner.temp }}/baseline-out
+          category: baseline-opa

@@ -1,0 +1,45 @@
+name: CI
+
+# Dogfood: github-security runs its own Baseline workflows on itself, through local refs, so
+# each change is tested at its own commit. Other repos call the released workflows by SHA.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    permissions:
+      contents: read
+      security-events: write
+    uses: $/.github/workflows/secrets.yml
+    with:
+      upload-sarif: true
+
+  workflow-security:
+    permissions:
+      contents: read
+      security-events: write
+    uses: $/.github/workflows/workflow-security.yml
+    with:
+      upload-sarif: true
+
+  dependency-review:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/dependency-review.yml
+
+  shell:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/shell.yml

@@ -1,0 +1,114 @@
+name: Self-test
+
+# Two kinds of test:
+# 1. scripts: tests/selftest.sh runs each scan script on its clean fixture (must pass) and its
+#    dirty fixture (the expected checks must fail, the expected rules must appear).
+# 2. workflows: each Module workflow runs on its clean fixture through a local ref and must pass.
+# Fixture files that other tools would act on carry a .fixture suffix (see tests/selftest.sh).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: selftest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripts:
+    name: scripts (${{ matrix.concern }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - concern: secrets
+            tools: gitleaks betterleaks trufflehog
+          - concern: workflow-security
+            tools: zizmor actionlint
+          - concern: python
+            tools: ruff semgrep pip-audit
+          - concern: node
+            tools: semgrep
+          - concern: terraform
+            tools: tflint checkov trivy
+          - concern: container
+            tools: trivy
+          - concern: shell
+            tools: shellcheck
+          - concern: opa
+            tools: regal conftest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Load the pins
+        run: grep -E '^[A-Z0-9_]+=' pins.env >> "$GITHUB_ENV"
+
+      - if: matrix.concern == 'node'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - if: matrix.concern == 'terraform'
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Install tools
+        env:
+          TOOLS: ${{ matrix.tools }}
+        # TOOLS is a space-separated list; split it into arguments on purpose.
+        run: |
+          # shellcheck disable=SC2086
+          scripts/install-tool.sh $TOOLS
+
+      - name: Run the self-test
+        env:
+          CONCERN: ${{ matrix.concern }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tests/selftest.sh "$CONCERN"
+
+  python:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/python.yml
+    with:
+      working-directory: tests/fixtures/python/clean
+
+  node:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/node.yml
+    with:
+      working-directory: tests/fixtures/node/clean
+
+  terraform:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/terraform.yml
+    with:
+      working-directory: tests/fixtures/terraform/clean
+
+  container:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/container.yml
+    with:
+      context: tests/fixtures/container/clean
+
+  opa:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/opa.yml
+    with:
+      working-directory: tests/fixtures/opa/clean

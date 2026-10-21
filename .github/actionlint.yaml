@@ -1,0 +1,10 @@
+# actionlint 1.7.12 (the newest release) predates two GitHub features that github-security uses.
+# Remove each ignore when an actionlint release knows the feature.
+paths:
+  .github/workflows/*.yml:
+    ignore:
+      # job.workflow_repository and job.workflow_sha: a reusable workflow reads its own commit
+      # (see docs/adr/0001-public-source-reusable-workflows.md).
+      - 'property "workflow_(repository|sha)" is not defined in object type'
+      # The self-repository syntax "uses: $/..." (GitHub changelog, 2026-07-30).
+      - 'reusable workflow call "\$/\.github/workflows/[^"]+" at "uses" is not following the format'
