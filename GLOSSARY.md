@@ -23,3 +23,11 @@ _Avoid_: migration, backport
 **In-scope repo**:
 A non-fork repo owned by arnoldcastro5000, public or private.
 _Avoid_: my repos, all repos
+
+**Caller file**:
+The one workflow file in an in-scope repo that calls the Baseline and its Modules by a pinned release.
+_Avoid_: stub, wrapper, security workflow
+
+**Rule pack**:
+An opt-in set of extra secret-scanning rules that a repo adds to the Baseline defaults.
+_Avoid_: ruleset, plugin, custom rules
