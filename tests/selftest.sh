@@ -84,6 +84,8 @@ if [ -f "$fixtures/expect-rules" ]; then
 fi
 
 if [ "$failures" -gt 0 ]; then
+  echo "=== $concern: dirty fixture log"
+  sed 's/^/  | /' "$work/log-dirty" | tail -80
   echo "=== $concern: $failures self-test failure(s)"
   exit 1
 fi
