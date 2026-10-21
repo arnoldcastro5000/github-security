@@ -1,0 +1,17 @@
+# Rule pack: cloud resource IDs. Flags hardcoded AWS resource IDs and Azure subscription or
+# tenant UUIDs, which belong in config variables, not in code.
+# From prowler-cspm-demo hardcoded-config-check.yml. Opt in with `rule-packs: cloud-resource-ids`.
+# The UUID rule matches any UUID, so use this pack only in infrastructure repos.
+
+[[rules]]
+id = "aws-resource-id"
+description = "Hardcoded AWS resource ID (security group, VPC, AMI, subnet)"
+regex = '''\b((?:sg|vpc|ami|subnet)-[0-9a-f]{8,17})\b'''
+secretGroup = 1
+keywords = ["sg-", "vpc-", "ami-", "subnet-"]
+
+[[rules]]
+id = "azure-uuid"
+description = "Hardcoded UUID (Azure subscription or tenant ID)"
+regex = '''\b([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b'''
+secretGroup = 1

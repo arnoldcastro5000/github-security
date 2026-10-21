@@ -1,0 +1,9 @@
+# github-security's own gitleaks config (read by the secrets workflow; see scripts/scan/secrets.sh).
+# Keep the default rules. The dirty self-test fixtures hold fake secrets on purpose.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Self-test fixtures with fake secrets"
+paths = ['''^tests/fixtures/''']

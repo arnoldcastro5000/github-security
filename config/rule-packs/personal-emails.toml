@@ -1,0 +1,18 @@
+# Rule pack: personal email addresses. Flags an email address in code or docs, except GitHub
+# noreply addresses and example domains.
+# From prowler-cspm-demo hardcoded-config-check.yml. Opt in with `rule-packs: personal-emails`.
+
+[[rules]]
+id = "personal-email"
+description = "Personal email address"
+regex = '''\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b'''
+secretGroup = 1
+keywords = ["@"]
+
+[[rules.allowlists]]
+regexTarget = "secret"
+regexes = [
+  '''@users\.noreply\.github\.com$''',
+  '''^noreply@''',
+  '''@example\.(com|org|net)$''',
+]

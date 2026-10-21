@@ -1,0 +1,58 @@
+# Rule pack: AWS account IDs. Treats an AWS account ID as non-public.
+# From loonvault .gitleaks.toml. Opt in with `rule-packs: aws-account-ids`.
+# The last rule matches any bare 12-digit token. Allowlist a genuine non-account number in
+# the repo's .gitleaks.toml or by fingerprint in .gitleaksignore.
+
+[[rules]]
+id = "aws-account-id-arn"
+description = "AWS account ID embedded in ARN"
+regex = '''arn:aws:[a-z0-9\-]*:[a-z0-9\-]*:(\d{12})[:/]'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-resource"
+description = "AWS account ID embedded in resource name"
+regex = '''(?i)(?:bucket|table|queue|function|cluster)\s*=\s*"[a-z0-9\-]+-(\d{12})["-]'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-sqs-url"
+description = "AWS account ID in SQS queue URL"
+regex = '''https://sqs\.[a-z0-9\-]+\.amazonaws\.com/(\d{12})/'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-variable"
+description = "AWS account ID in standalone variable assignment"
+regex = '''(?i)(?:account[_\-]?id|aws[_\-]?account)\s*[:=]\s*["']?(\d{12})["']?'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-ecr"
+description = "AWS account ID in ECR registry URL"
+regex = '''(\d{12})\.dkr\.ecr\.[a-z0-9\-]+\.amazonaws\.com'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-iam-principal"
+description = "AWS account ID as bare IAM Principal (scalar or array element)"
+regex = '''"AWS"\s*:\s*\[?\s*"(\d{12})"'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-console-url"
+description = "AWS account ID in console deep-link URL"
+regex = '''[?&#]accountId=(\d{12})'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-array-element"
+description = "AWS account ID as a bare quoted array element (following a comma)"
+regex = ''',\s*"(\d{12})"'''
+secretGroup = 1
+
+[[rules]]
+id = "aws-account-id-bare"
+description = "Bare 12-digit AWS account ID (any context, incl. prose)"
+regex = '''\b(\d{12})\b'''
+secretGroup = 1
