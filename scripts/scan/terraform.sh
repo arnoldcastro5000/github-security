@@ -32,11 +32,15 @@ tflint_scan() {
 check tflint tflint_scan
 
 check checkov checkov --directory . --framework terraform --quiet --compact \
-  --output cli --output sarif --output-file-path "console,$BASELINE_OUT"
-# checkov names its report results_sarif.sarif.
-if [ -f "$BASELINE_OUT/results_sarif.sarif" ]; then
-  mv "$BASELINE_OUT/results_sarif.sarif" "$BASELINE_OUT/checkov.sarif"
+  --output cli --output sarif --output-file-path "console,$BASELINE_OUT/checkov"
+# checkov picks the report file name itself; keep it as checkov.sarif.
+checkov_report="$(find "$BASELINE_OUT/checkov" -name '*.sarif' 2>/dev/null | head -1)"
+if [ -n "$checkov_report" ]; then
+  mv "$checkov_report" "$BASELINE_OUT/checkov.sarif"
+else
+  echo "terraform.sh: checkov wrote no SARIF report; files: $(find "$BASELINE_OUT/checkov" -type f 2>/dev/null | tr '\n' ' ')"
 fi
+rm -rf "$BASELINE_OUT/checkov"
 
 # shellcheck disable=SC2329 # check() calls this function
 trivy_config() {
