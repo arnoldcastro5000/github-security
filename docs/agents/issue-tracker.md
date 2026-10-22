@@ -44,3 +44,17 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
 - **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
+## `gh` 2.46 on this host
+
+The host has `gh` 2.46. Some commands above need a newer `gh`. Use these forms instead (`R=repos/arnoldcastro5000/github-security`):
+
+- **Claim** (`gh issue edit --add-assignee` fails on a deprecated Projects field): `gh api --method POST $R/issues/<n>/assignees -f 'assignees[]=arnoldcastro5000'`.
+- **Sub-issue** (no `--parent`): `gh api --method POST $R/issues/<map>/sub_issues -F sub_issue_id=$(gh api $R/issues/<child> --jq .id)`.
+- **Order a sub-issue** (keep the map's fix tickets last): `gh api --method PATCH $R/issues/<map>/sub_issues/priority -F sub_issue_id=<db-id> -F before_id=<db-id of the first fix ticket>`.
+- **Comment, close**: `gh api --method POST $R/issues/<n>/comments -F body=@file.md`; `gh api --method PATCH $R/issues/<n> -f state=closed -f state_reason=completed`.
+- **PR checks** (no `--json` on `gh pr checks`): `gh api "$R/commits/<sha>/check-runs?per_page=100" --jq '.check_runs[] | "\(.status) \(.conclusion) \(.name)"'`.
+- **Job log** (`gh run view --log` can print nothing): `gh api $R/actions/jobs/<job-id>/logs`.
+- **Labels in a loop**: `gh label create ... </dev/null`, else `gh` reads the loop's stdin.
+- **Visibility** (no `--accept-visibility-change-consequences`): `gh api --method PATCH $R -f visibility=public`.
+- **Merge**: never `gh pr merge`. See `docs/agents/implement.md` (Git).
